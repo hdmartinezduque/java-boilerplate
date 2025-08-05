@@ -44,13 +44,10 @@ public class JwtFilter extends OncePerRequestFilter {
                         new UsernamePasswordAuthenticationToken(username, null, Collections.emptyList());
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             } catch (TokenExpiredException e) {
-                // Delegamos el manejo de la excepción al HandlerExceptionResolver.
-                // Esto hará que la excepción sea procesada por el @ControllerAdvice.
-                handlerExceptionResolver.resolveException(request, response, null, new TkExpiredException("El token ha expirado"));
-                return; // Detenemos la cadena de filtros
+                handlerExceptionResolver.resolveException(request, response, null, new TkExpiredException("Token has been Expired"));
+                return;
             } catch (Exception e) {
-                // Manejamos otras excepciones relacionadas con el token
-                handlerExceptionResolver.resolveException(request, response, null, new RuntimeException("Token inválido"));
+                handlerExceptionResolver.resolveException(request, response, null, new RuntimeException("Invalid token"));
                 return;
             }
         }
