@@ -44,5 +44,16 @@ public class GlobalExceptionHandler {
         ));
     }
 
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Map<String, Object>> handleAccessDeniedException(AccessDeniedException ex, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                "timestamp", LocalDateTime.now(),
+                "status", HttpStatus.FORBIDDEN.value(),
+                "error", "Forbidden",
+                "message", "you do not have permission to be in this session",
+                "path", request.getRequestURI()
+        ));
+    }
+
 }
 

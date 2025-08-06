@@ -7,11 +7,14 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/protected")
-public class HelloController {
+@RequestMapping("/public")
+public class PublicController {
 
-    @GetMapping("/hello")
-    public Map<String, String> hello(){
-        return Map.of("status", "0");
+
+
+    @GetMapping("/test")
+    public Map<String, String> publicEndpoint() {
+        return Map.of("message", "Este endpoint es público");
     }
+
 }
