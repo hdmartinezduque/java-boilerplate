@@ -13,13 +13,13 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<Map<String, Object>> handleAuthException(AuthenticationException ex) {
+    public ResponseEntity<Map<String, Object>> handleAuthException(AuthenticationException ex, HttpServletRequest request) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
                 "timestamp", LocalDateTime.now(),
                 "status", HttpStatus.UNAUTHORIZED.value(),
                 "error", "Unauthorized",
                 "message", ex.getMessage(),
-                "path", "/auth/login"
+                "path", request.getRequestURI()
         ));
     }
 
@@ -40,6 +40,17 @@ public class GlobalExceptionHandler {
                 "status", HttpStatus.UNAUTHORIZED.value(),
                 "error", "Token Expired",
                 "message", ex.getMessage(),
+                "path", request.getRequestURI()
+        ));
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Map<String, Object>> handleAccessDeniedException(AccessDeniedException ex, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                "timestamp", LocalDateTime.now(),
+                "status", HttpStatus.FORBIDDEN.value(),
+                "error", "Forbidden",
+                "message", "you do not have permission to be in this session",
                 "path", request.getRequestURI()
         ));
     }
