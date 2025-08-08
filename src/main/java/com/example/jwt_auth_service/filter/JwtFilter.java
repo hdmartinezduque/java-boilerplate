@@ -1,9 +1,8 @@
 package com.example.jwt_auth_service.filter;
 
 import com.auth0.jwt.exceptions.TokenExpiredException;
-import com.example.jwt_auth_service.exception.AccessDeniedException;
 import com.example.jwt_auth_service.exception.TkExpiredException;
-import com.example.jwt_auth_service.exception.AuthenticationException; // Importa tu clase AuthenticationException
+import com.example.jwt_auth_service.exception.AuthenticationException;
 import com.example.jwt_auth_service.security.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -17,9 +16,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 
 import static com.example.jwt_auth_service.util.ConstanatsUrls.PUBLIC_URLS;
 
@@ -66,11 +63,11 @@ public class JwtFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             } catch (TokenExpiredException e) {
                 // 5. Manejar token expirado (401 Unauthorized)
-                handlerExceptionResolver.resolveException(request, response, null, new TkExpiredException("El token ha expirado"));
+                handlerExceptionResolver.resolveException(request, response, null, new TkExpiredException("Token has been expired"));
                 return; // Detener la cadena de filtros
             } catch (Exception e) {
                 // 6. Manejar cualquier otra excepción de token (inválido, malformado) (401 Unauthorized)
-                handlerExceptionResolver.resolveException(request, response, null, new RuntimeException("Token inválido"));
+                handlerExceptionResolver.resolveException(request, response, null, new RuntimeException("Invalid Token"));
                 return; // Detener la cadena de filtros
             }
         } else {
@@ -78,7 +75,7 @@ public class JwtFilter extends OncePerRequestFilter {
             // Si no hay token o no tiene el formato "Bearer ", y la ruta NO es pública,
             // lanzamos una AuthenticationException.
             handlerExceptionResolver.resolveException(request, response, null,
-                    new AuthenticationException("Usted no tiene permisos para acceder a esta sesión. Se requiere un token de autenticación."));
+                    new AuthenticationException("You do not have enougth permission to be here"));
             return; // Detener la cadena de filtros
         }
 

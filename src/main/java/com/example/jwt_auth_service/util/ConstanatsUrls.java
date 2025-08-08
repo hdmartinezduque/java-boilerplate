@@ -6,6 +6,7 @@ import java.util.List;
 public class ConstanatsUrls {
     public static final List<String> PUBLIC_URLS = Arrays.asList(
             "/auth/login",
+            "/auth/test",
             "/auth/register",
             "/public/hello",
             "/api/products",

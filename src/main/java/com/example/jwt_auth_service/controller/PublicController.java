@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/public")
+@RequestMapping("/auth")
 public class PublicController {
 
 

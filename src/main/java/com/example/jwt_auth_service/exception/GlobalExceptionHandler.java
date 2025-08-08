@@ -13,13 +13,13 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<Map<String, Object>> handleAuthException(AuthenticationException ex) {
+    public ResponseEntity<Map<String, Object>> handleAuthException(AuthenticationException ex, HttpServletRequest request) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
                 "timestamp", LocalDateTime.now(),
                 "status", HttpStatus.UNAUTHORIZED.value(),
                 "error", "Unauthorized",
                 "message", ex.getMessage(),
-                "path", "/auth/login"
+                "path", request.getRequestURI()
         ));
     }
 
