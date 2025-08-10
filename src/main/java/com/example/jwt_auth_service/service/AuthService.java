@@ -23,6 +23,5 @@ public class AuthService {
             return jwtUtil.generateToken(username);
         }
         throw new AuthenticationException("Invalid Credencial");
-        //throw new RuntimeException("Credenciales inválidas");
     }
 }

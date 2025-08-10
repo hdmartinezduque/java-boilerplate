@@ -9,7 +9,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.example</groupId>
-	<artifactId>jwt-auth-service</artifactId>
+	<artifactId>java-boilerplate</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>jwt-auth-service</name>
 	<description>Endpoint Demo API - JWT - CRUD user</description>

@@ -1,93 +1,77 @@
 package com.example.jwt_auth_service.filter;
 
 import com.auth0.jwt.exceptions.TokenExpiredException;
+import com.example.jwt_auth_service.exception.TkExpiredException;
+import com.example.jwt_auth_service.exception.AuthenticationException;
 import com.example.jwt_auth_service.security.JwtUtil;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.*;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.servlet.HandlerExceptionResolver;
+
 import java.io.IOException;
-import java.time.LocalDateTime;
 import java.util.Collections;
-import java.util.Map;
+
+import static com.example.jwt_auth_service.util.ConstanatsUrls.PUBLIC_URLS;
 
 @Component
-public class JwtFilter implements Filter {
+public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
+    private final HandlerExceptionResolver handlerExceptionResolver;
 
-    public JwtFilter(JwtUtil jwtUtil) {
+    @Autowired
+    public JwtFilter(JwtUtil jwtUtil, HandlerExceptionResolver handlerExceptionResolver) {
         this.jwtUtil = jwtUtil;
+        this.handlerExceptionResolver = handlerExceptionResolver;
     }
 
     @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
-            throws IOException, ServletException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
 
-        HttpServletRequest httpRequest = (HttpServletRequest) request;
-        HttpServletResponse httpResponse = (HttpServletResponse) response;
-        String authHeader = httpRequest.getHeader("Authorization");
+        String requestURI = request.getRequestURI();
+        //Public URLs
+        boolean isPublicUrl = PUBLIC_URLS.stream().anyMatch(requestURI::startsWith);
+
+        if (isPublicUrl) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        String authHeader = request.getHeader("Authorization");
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
 
             try {
+
                 String username = jwtUtil.validateTokenAndRetrieveSubject(token);
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(username, null, Collections.emptyList());
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-
-                // Si el token es válido, continúa con el siguiente filtro en la cadena
-                chain.doFilter(request, response);
-                return;
-
             } catch (TokenExpiredException e) {
-                // Captura la excepción de token expirado y genera una respuesta de error
-                handleExpiredTokenError(httpResponse, httpRequest);
-                return; // Importante: detén la cadena de filtros
+                // Handling (401 Unauthorized)
+                handlerExceptionResolver.resolveException(request, response, null, new TkExpiredException("Token has been expired"));
+                return; 
             } catch (Exception e) {
-                // Captura cualquier otra excepción relacionada con el token
-                handleInvalidTokenError(httpResponse, httpRequest);
-                return; // Importante: detén la cadena de filtros
+                // (Invalid Token, No format) (401 Unauthorized)
+                handlerExceptionResolver.resolveException(request, response, null, new RuntimeException("Invalid Token"));
+                return; 
             }
+        } else {
+            // Lack Token(401 Unauthorized)
+            handlerExceptionResolver.resolveException(request, response, null,
+                    new AuthenticationException("You do not have enougth permission to be here"));
+            return; 
         }
 
-        // Si no hay token en el header o no es Bearer, continúa la cadena de filtros
-        chain.doFilter(request, response);
-    }
-
-    private void handleExpiredTokenError(HttpServletResponse response, HttpServletRequest request) throws IOException {
-        response.setStatus(HttpStatus.UNAUTHORIZED.value());
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-
-        Map<String, Object> errorDetails = Map.of(
-                "timestamp", LocalDateTime.now(),
-                "status", HttpStatus.UNAUTHORIZED.value(),
-                "error", "Token Expired",
-                "message", "El token ha expirado.",
-                "path", request.getRequestURI()
-        );
-
-        new ObjectMapper().writeValue(response.getOutputStream(), errorDetails);
-    }
-
-    private void handleInvalidTokenError(HttpServletResponse response, HttpServletRequest request) throws IOException {
-        response.setStatus(HttpStatus.UNAUTHORIZED.value());
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-
-        Map<String, Object> errorDetails = Map.of(
-                "timestamp", LocalDateTime.now(),
-                "status", HttpStatus.UNAUTHORIZED.value(),
-                "error", "Unauthorized",
-                "message", "Token inválido.",
-                "path", request.getRequestURI()
-        );
-
-        new ObjectMapper().writeValue(response.getOutputStream(), errorDetails);
+        filterChain.doFilter(request, response);
     }
 }
