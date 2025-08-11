@@ -12,6 +12,8 @@ public class JwtProperties {
     private String userName;
     private String password;
 
+    private String filesRoute;
+
     // Getters y setters
     public String getSecret() {
         return secret;
@@ -31,6 +33,10 @@ public class JwtProperties {
         return userName;
     }
 
+    public String getFilesRoute() {
+        return filesRoute;
+    }
+
     public void setUserName(String userName) {
         this.userName = userName;
     }
@@ -41,5 +47,9 @@ public class JwtProperties {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public void setFilesRoute(String filesRoute) {
+        this.filesRoute = filesRoute;
     }
 }
