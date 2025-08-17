@@ -27,7 +27,7 @@ public class FileDownloadController {
     }
     @GetMapping("/downloadFiles/{fileName}")
 
-    public ResponseEntity<byte[]> publicDownloadPdfFiles(@PathVariable String fileName) throws IOException {
+    public ResponseEntity<byte[]> publicDownloadPdfFiles(@PathVariable String fileName) {
 
         Path filePath = Paths.get(jwtProperties.getFilesRoute(), fileName);
 
