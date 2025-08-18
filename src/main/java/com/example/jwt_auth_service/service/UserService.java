@@ -4,8 +4,8 @@ package com.example.jwt_auth_service.service;
 import com.example.jwt_auth_service.model.User;
 import com.example.jwt_auth_service.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -16,6 +16,13 @@ public class UserService {
 
     @Autowired
     private UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    @Autowired
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder){
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     public List<User> getAllUsers() {
         return userRepository.findAll();
@@ -26,6 +33,8 @@ public class UserService {
     }
 
     public User createUser(User user) {
+        String hashedPassword = passwordEncoder.encode(user.getPassword());
+        user.setPassword(hashedPassword);
         return userRepository.save(user);
     }
 
@@ -46,6 +55,7 @@ public class UserService {
                     userToUpdate.setEmail((String) value);
                     break;
                 case "password":
+                    String hashedPassword = passwordEncoder.encode((String) value);
                     userToUpdate.setPassword((String) value);
                     break;
             }
