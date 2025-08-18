@@ -9,8 +9,6 @@ public class JwtProperties {
     private String secret;
     private long expiration;
 
-    private String userName;
-    private String password;
 
     private String filesRoute;
 
@@ -29,25 +27,11 @@ public class JwtProperties {
         this.expiration = expiration;
     }
 
-    public String getUserName() {
-        return userName;
-    }
 
     public String getFilesRoute() {
         return filesRoute;
     }
 
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
 
     public void setFilesRoute(String filesRoute) {
         this.filesRoute = filesRoute;
