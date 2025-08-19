@@ -5,15 +5,11 @@ import java.util.List;
 
 public class ConstanatsUrls {
     public static final List<String> PUBLIC_URLS = Arrays.asList(
-            "/auth/login",
-            "/public/test",
-            "/auth/register",
-            "/public/hello",
+            "/auth/",
+            "/public/",
             "/api/products",
             "/swagger-ui.html",
             "/swagger-ui/", 
-            "/v3/api-docs/", 
-            "/swagger-ui/**", 
-            "/v3/api-docs/**" 
+            "/v3/api-docs/"
     );
 }
