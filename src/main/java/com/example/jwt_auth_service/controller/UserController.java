@@ -1,5 +1,6 @@
 package com.example.jwt_auth_service.controller;
 
+import com.example.jwt_auth_service.dto.PageResponse;
 import com.example.jwt_auth_service.model.User;
 import com.example.jwt_auth_service.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,42 +12,36 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/users") // La URL base para todos los endpoints de este controlador
+@RequestMapping("/api/users")
 public class UserController {
 
     @Autowired
     private UserService userService;
 
-    /**
-     * GET /api/users - Obtiene todos los usuarios
-     */
     @GetMapping
-    public List<User> getAllUsers() {
-        return userService.getAllUsers();
+    public ResponseEntity<PageResponse<User>> getAllUsers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
+
+        PageResponse<User> users = userService.getAllUsers(page, size, sortBy, sortDir);
+        return ResponseEntity.ok(users);
     }
 
-    /**
-     * GET /api/users/{id} - Obtiene un usuario por su ID
-     */
     @GetMapping("/{id}")
     public ResponseEntity<User> getUserById(@PathVariable Long id) {
         return userService.getUserById(id)
-                .map(ResponseEntity::ok) // Si lo encuentra, devuelve 200 OK con el usuario
-                .orElse(ResponseEntity.notFound().build()); // Si no, devuelve 404 Not Found
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
-    /**
-     * POST /api/users - Crea un nuevo usuario
-     */
     @PostMapping
     public ResponseEntity<User> createUser(@RequestBody User user) {
         User newUser = userService.createUser(user);
         return ResponseEntity.status(HttpStatus.CREATED).body(newUser);
     }
 
-    /**
-     * PATCH /api/users/{id} - Actualiza parcialmente un usuario
-     */
     @PatchMapping("/{id}")
     public ResponseEntity<User> updateUserPartial(@PathVariable Long id, @RequestBody Map<String, Object> updates) {
         try {
@@ -57,16 +52,12 @@ public class UserController {
         }
     }
 
-    /**
-     * DELETE /api/users/{id} - Elimina un usuario
-     */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         try {
             userService.deleteUser(id);
-            return ResponseEntity.noContent().build(); // Devuelve 204 No Content
+            return ResponseEntity.noContent().build();
         } catch (Exception e) {
-            // Esto captura el error si se intenta borrar un ID que no existe
             return ResponseEntity.notFound().build();
         }
     }
