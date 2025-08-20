@@ -1,8 +1,10 @@
 package com.example.jwt_auth_service.controller;
 
+import com.example.jwt_auth_service.dto.ApiResponse;
 import com.example.jwt_auth_service.dto.PageResponse;
 import com.example.jwt_auth_service.model.User;
 import com.example.jwt_auth_service.service.UserService;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,6 +12,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @RestController
 @RequestMapping("/api/users")
@@ -53,12 +57,27 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse> deleteUser(@PathVariable Long id) {
+        String message = "";
         try {
-            userService.deleteUser(id);
-            return ResponseEntity.noContent().build();
-        } catch (Exception e) {
-            return ResponseEntity.notFound().build();
+            if (!userService.existsById(id)) {
+                message = "User with ID " + id + " does not exist.";
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new ApiResponse(HttpStatus.NOT_FOUND.value(), message));
+            }else {
+                userService.deleteUser(id);
+                message = "User with ID " + id + " deleted successfully.";
+                ApiResponse response = new ApiResponse(HttpStatus.OK.value(), message);
+                return ResponseEntity.ok(response);
+            }
+
+        } catch (EntityNotFoundException ex) {
+            message = "User with ID " + id + " not found.";
+            ApiResponse response = new ApiResponse(NOT_FOUND.value(), message);
+            return ResponseEntity.status(NOT_FOUND).body(response);
+        } catch (Exception ex) {
+            ApiResponse response = new ApiResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), message);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
 }

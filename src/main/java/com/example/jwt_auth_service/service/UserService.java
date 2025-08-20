@@ -83,4 +83,8 @@ public class UserService {
         });
         return userRepository.save(userToUpdate);
     }
+
+    public boolean existsById(Long id) {
+        return userRepository.existsById(id);
+    }
 }
