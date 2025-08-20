@@ -1,4 +1,4 @@
-##Description
+Description
 This is a Java boilerplate project that provides a basic structure for building RESTful APIs with Spring
 
 Requirements
