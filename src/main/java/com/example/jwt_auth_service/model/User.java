@@ -11,11 +11,11 @@ import java.util.Collection;
 import java.util.List;
 
 @Entity
-@Table(name = "users") // Le decimos a Hibernate que esta entidad mapea a la tabla 'users'
+@Table(name = "users") // This ensures the table name is "users"
 public class User implements UserDetails {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // Autoincremental en MySQL
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // Auto-incrementing primary key
     private Long id;
 
     @Column(nullable = false)
@@ -27,7 +27,7 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String password;
     
-    @CreationTimestamp // Hibernate asignará la fecha y hora actual al crear el registro
+    @CreationTimestamp // Hibernate annotation to automatically set the creation timestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
