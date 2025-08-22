@@ -4,13 +4,11 @@ import com.example.jwt_auth_service.dto.ApiResponse;
 import com.example.jwt_auth_service.dto.PageResponse;
 import com.example.jwt_auth_service.model.User;
 import com.example.jwt_auth_service.service.UserService;
-import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 
 import static org.springframework.http.HttpStatus.NOT_FOUND;
@@ -18,6 +16,7 @@ import static org.springframework.http.HttpStatus.NOT_FOUND;
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
+
 
     @Autowired
     private UserService userService;
@@ -47,37 +46,34 @@ public class UserController {
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<User> updateUserPartial(@PathVariable Long id, @RequestBody Map<String, Object> updates) {
-        try {
-            User updatedUser = userService.updateUserPartial(id, updates);
-            return ResponseEntity.ok(updatedUser);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<ApiResponse> updateUserPartial(@PathVariable Long id, @RequestBody Map<String, Object> updates) {
+        String message = "";
+        User updatedUser = userService.updateUserPartial(id, updates);
+            if(userService.existsById(id)){
+                message = "User with ID " + id + " does not exist.";
+                System.out.println(message);
+                return ResponseEntity.status(NOT_FOUND)
+                        .body(new ApiResponse(HttpStatus.OK.value(), message)); // Return an empty User object or handle as needed
+            } else {
+                message = "User with ID " + id + " updated successfully.";
+                ApiResponse response = new ApiResponse(HttpStatus.OK.value(), message);
+                System.out.println(message);
+                return ResponseEntity.ok(response);
+            }
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse> deleteUser(@PathVariable Long id) {
         String message = "";
-        try {
-            if (!userService.existsById(id)) {
-                message = "User with ID " + id + " does not exist.";
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new ApiResponse(HttpStatus.NOT_FOUND.value(), message));
-            }else {
-                userService.deleteUser(id);
-                message = "User with ID " + id + " deleted successfully.";
-                ApiResponse response = new ApiResponse(HttpStatus.OK.value(), message);
-                return ResponseEntity.ok(response);
-            }
-
-        } catch (EntityNotFoundException ex) {
-            message = "User with ID " + id + " not found.";
-            ApiResponse response = new ApiResponse(NOT_FOUND.value(), message);
-            return ResponseEntity.status(NOT_FOUND).body(response);
-        } catch (Exception ex) {
-            ApiResponse response = new ApiResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), message);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        if (userService.existsById(id)) {
+            message = "User with ID " + id + " does not exist.";
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponse(HttpStatus.NOT_FOUND.value(), message));
+        }else {
+            userService.deleteUser(id);
+            message = "User with ID " + id + " deleted successfully.";
+            ApiResponse response = new ApiResponse(HttpStatus.OK.value(), message);
+            return ResponseEntity.ok(response);
         }
     }
 }

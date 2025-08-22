@@ -65,7 +65,7 @@ public class UserService {
 
     public User updateUserPartial(Long id, Map<String, Object> updates) {
         User userToUpdate = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User by Id could not find it: " + id));
+                .orElseThrow(() -> new RuntimeException("User with ID "  + id + " does not exist."));
 
         updates.forEach((key, value) -> {
             switch (key) {
@@ -85,6 +85,6 @@ public class UserService {
     }
 
     public boolean existsById(Long id) {
-        return userRepository.existsById(id);
+        return !userRepository.existsById(id);
     }
 }
