@@ -1,73 +1,66 @@
 package com.example.jwt_auth_service.controller;
 
+import com.example.jwt_auth_service.dto.ApiResponse;
+import com.example.jwt_auth_service.dto.PageResponse;
+import com.example.jwt_auth_service.dto.UserCreateRequest;
 import com.example.jwt_auth_service.model.User;
 import com.example.jwt_auth_service.service.UserService;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @RestController
-@RequestMapping("/api/users") // La URL base para todos los endpoints de este controlador
+@RequestMapping("/api/users")
 public class UserController {
 
     @Autowired
     private UserService userService;
 
-    /**
-     * GET /api/users - Obtiene todos los usuarios
-     */
     @GetMapping
-    public List<User> getAllUsers() {
-        return userService.getAllUsers();
+    public ResponseEntity<PageResponse<User>> getAllUsers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id,asc") String[] sort) {
+
+        String sortBy = sort[0];
+        String sortDir = sort.length > 1 ? sort[1] : "asc";
+
+        PageResponse<User> usersPage = userService.getAllUsers(page, size, sortBy, sortDir);
+        return ResponseEntity.ok(usersPage);
     }
 
-    /**
-     * GET /api/users/{id} - Obtiene un usuario por su ID
-     */
-    @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable Long id) {
-        return userService.getUserById(id)
-                .map(ResponseEntity::ok) // Si lo encuentra, devuelve 200 OK con el usuario
-                .orElse(ResponseEntity.notFound().build()); // Si no, devuelve 404 Not Found
-    }
-
-    /**
-     * POST /api/users - Crea un nuevo usuario
-     */
     @PostMapping
-    public ResponseEntity<User> createUser(@RequestBody User user) {
-        User newUser = userService.createUser(user);
-        return ResponseEntity.status(HttpStatus.CREATED).body(newUser);
+    public ResponseEntity<User> create(@Valid @RequestBody UserCreateRequest req) {
+        User user = new User();
+        user.setName(req.getName());
+        user.setEmail(req.getEmail());
+        user.setPassword(req.getPassword());
+        User saved = userService.createUser(user, req.getCompanyId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
-    /**
-     * PATCH /api/users/{id} - Actualiza parcialmente un usuario
-     */
     @PatchMapping("/{id}")
     public ResponseEntity<User> updateUserPartial(@PathVariable Long id, @RequestBody Map<String, Object> updates) {
-        try {
-            User updatedUser = userService.updateUserPartial(id, updates);
-            return ResponseEntity.ok(updatedUser);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+        //updates.keySet().retainAll(Set.of("name", "email", "password", "companyId"));
+        User updated = userService.updateUserPartial(id, updates);
+        return ResponseEntity.ok(updated);
     }
 
-    /**
-     * DELETE /api/users/{id} - Elimina un usuario
-     */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-        try {
-            userService.deleteUser(id);
-            return ResponseEntity.noContent().build(); // Devuelve 204 No Content
-        } catch (Exception e) {
-            // Esto captura el error si se intenta borrar un ID que no existe
-            return ResponseEntity.notFound().build();
+    public ResponseEntity<ApiResponse> delete(@PathVariable Long id) {
+        if (!userService.existsById(id)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponse(HttpStatus.NOT_FOUND.value(), "User with ID " + id + " not found."));
         }
+        userService.deleteUser(id);
+        return ResponseEntity.ok(new ApiResponse(HttpStatus.OK.value(), "User with ID " + id + " deleted successfully."));
     }
 }

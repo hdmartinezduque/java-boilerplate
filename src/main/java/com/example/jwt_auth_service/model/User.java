@@ -1,5 +1,6 @@
 package com.example.jwt_auth_service.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.persistence.Entity;
 import org.hibernate.annotations.CreationTimestamp;
@@ -11,12 +12,21 @@ import java.util.Collection;
 import java.util.List;
 
 @Entity
-@Table(name = "users") // Le decimos a Hibernate que esta entidad mapea a la tabla 'users'
+@Table(name = "users") // This ensures the table name is "users"
 public class User implements UserDetails {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // Autoincremental en MySQL
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // Auto-incrementing primary key
     private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_company")
+    @JsonIgnoreProperties({"users", "hibernateLazyInitializer", "handler"})
+    private Company company;
+
+    public Company getCompany() { return company; }
+    public void setCompany(Company company) { this.company = company; }
+
 
     @Column(nullable = false)
     private String name;
@@ -27,7 +37,7 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String password;
     
-    @CreationTimestamp // Hibernate asignará la fecha y hora actual al crear el registro
+    @CreationTimestamp // Hibernate annotation to automatically set the creation timestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
@@ -85,4 +95,8 @@ public class User implements UserDetails {
     public void setPassword(String password) { this.password = password; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public Long getIdCompany() {
+        return company != null ? company.getId() : null;
+    }
 }
