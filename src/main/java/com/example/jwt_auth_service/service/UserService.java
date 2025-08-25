@@ -2,8 +2,12 @@ package com.example.jwt_auth_service.service;
 
 
 import com.example.jwt_auth_service.dto.PageResponse;
+import com.example.jwt_auth_service.dto.UserCreateRequest;
+import com.example.jwt_auth_service.model.Company;
 import com.example.jwt_auth_service.model.User;
 import com.example.jwt_auth_service.repository.UserRepository;
+import jakarta.transaction.Transactional;
+//import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -11,6 +15,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import com.example.jwt_auth_service.repository.CompanyRepository;
 
 import java.util.List;
 import java.util.Map;
@@ -21,13 +28,12 @@ public class UserService {
 
     @Autowired
     private UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder){
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-    }
+    private CompanyRepository companyRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     public PageResponse<User> getAllUsers(int page, int size, String sortBy, String sortDir) {
         Sort sort = sortDir.equalsIgnoreCase("asc")
@@ -47,22 +53,27 @@ public class UserService {
                 pageResult.getTotalPages(),
                 pageResult.isLast()
         );
-    }
+      }
 
-    public Optional<User> getUserById(Long id) {
-        return userRepository.findById(id);
-    }
+    @PersistenceContext
+    private EntityManager entityManager;
 
-    public User createUser(User user) {
+    @Transactional
+    public User createUser(User user, Long companyId) {
+        if(userRepository.findByEmail(user.getEmail()).isPresent()) {
+            throw new IllegalArgumentException("Email is already in use: " + user.getEmail());
+        }
         String hashedPassword = passwordEncoder.encode(user.getPassword());
         user.setPassword(hashedPassword);
+
+        Company company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new IllegalArgumentException("Company not found with ID: " + companyId));
+        user.setCompany(company);
+
         return userRepository.save(user);
     }
 
-    public void deleteUser(Long id) {
-        userRepository.deleteById(id);
-    }
-
+    @Transactional
     public User updateUserPartial(Long id, Map<String, Object> updates) {
         User userToUpdate = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User by Id could not find it: " + id));
@@ -77,11 +88,24 @@ public class UserService {
                     break;
                 case "password":
                     String hashedPassword = passwordEncoder.encode((String) value);
-                    userToUpdate.setPassword((String) value);
+                    userToUpdate.setPassword(hashedPassword);
+                    break;
+                case "companyId":
+                    Long cid = Long.valueOf(value.toString());
+                    Company ref = entityManager.getReference(Company.class, cid);
+                    userToUpdate.setCompany(ref);
+                    break;
+                default:
+                    // Ignorar campos no permitidos
                     break;
             }
         });
+
         return userRepository.save(userToUpdate);
+    }
+
+    public void deleteUser(Long id) {
+        userRepository.deleteById(id);
     }
 
     public boolean existsById(Long id) {

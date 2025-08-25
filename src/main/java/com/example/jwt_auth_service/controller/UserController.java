@@ -2,16 +2,18 @@ package com.example.jwt_auth_service.controller;
 
 import com.example.jwt_auth_service.dto.ApiResponse;
 import com.example.jwt_auth_service.dto.PageResponse;
+import com.example.jwt_auth_service.dto.UserCreateRequest;
 import com.example.jwt_auth_service.model.User;
 import com.example.jwt_auth_service.service.UserService;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
@@ -26,58 +28,39 @@ public class UserController {
     public ResponseEntity<PageResponse<User>> getAllUsers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "asc") String sortDir) {
+            @RequestParam(defaultValue = "id,asc") String[] sort) {
 
-        PageResponse<User> users = userService.getAllUsers(page, size, sortBy, sortDir);
-        return ResponseEntity.ok(users);
-    }
+        String sortBy = sort[0];
+        String sortDir = sort.length > 1 ? sort[1] : "asc";
 
-    @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable Long id) {
-        return userService.getUserById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        PageResponse<User> usersPage = userService.getAllUsers(page, size, sortBy, sortDir);
+        return ResponseEntity.ok(usersPage);
     }
 
     @PostMapping
-    public ResponseEntity<User> createUser(@RequestBody User user) {
-        User newUser = userService.createUser(user);
-        return ResponseEntity.status(HttpStatus.CREATED).body(newUser);
+    public ResponseEntity<User> create(@Valid @RequestBody UserCreateRequest req) {
+        User user = new User();
+        user.setName(req.getName());
+        user.setEmail(req.getEmail());
+        user.setPassword(req.getPassword());
+        User saved = userService.createUser(user, req.getCompanyId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
     @PatchMapping("/{id}")
     public ResponseEntity<User> updateUserPartial(@PathVariable Long id, @RequestBody Map<String, Object> updates) {
-        try {
-            User updatedUser = userService.updateUserPartial(id, updates);
-            return ResponseEntity.ok(updatedUser);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+        //updates.keySet().retainAll(Set.of("name", "email", "password", "companyId"));
+        User updated = userService.updateUserPartial(id, updates);
+        return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse> deleteUser(@PathVariable Long id) {
-        String message = "";
-        try {
-            if (!userService.existsById(id)) {
-                message = "User with ID " + id + " does not exist.";
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new ApiResponse(HttpStatus.NOT_FOUND.value(), message));
-            }else {
-                userService.deleteUser(id);
-                message = "User with ID " + id + " deleted successfully.";
-                ApiResponse response = new ApiResponse(HttpStatus.OK.value(), message);
-                return ResponseEntity.ok(response);
-            }
-
-        } catch (EntityNotFoundException ex) {
-            message = "User with ID " + id + " not found.";
-            ApiResponse response = new ApiResponse(NOT_FOUND.value(), message);
-            return ResponseEntity.status(NOT_FOUND).body(response);
-        } catch (Exception ex) {
-            ApiResponse response = new ApiResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), message);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    public ResponseEntity<ApiResponse> delete(@PathVariable Long id) {
+        if (!userService.existsById(id)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponse(HttpStatus.NOT_FOUND.value(), "User with ID " + id + " not found."));
         }
+        userService.deleteUser(id);
+        return ResponseEntity.ok(new ApiResponse(HttpStatus.OK.value(), "User with ID " + id + " deleted successfully."));
     }
 }
