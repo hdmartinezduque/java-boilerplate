@@ -5,6 +5,8 @@ import com.example.jwt_auth_service.dto.PageResponse;
 import com.example.jwt_auth_service.dto.UserCreateRequest;
 import com.example.jwt_auth_service.model.User;
 import com.example.jwt_auth_service.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,11 +25,14 @@ public class UserController {
 
     @Autowired
     private UserService userService;
-
+    @Operation(summary = "Get all users with pagination and sorting")
     @GetMapping
     public ResponseEntity<PageResponse<User>> getAllUsers(
+            @Parameter(description = "Page of Number", example = "0")
             @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Size", example = "10")
             @RequestParam(defaultValue = "10") int size,
+            @Parameter(description = "Order by, e.g., 'id,asc' or 'name,desc'", example = "id,asc")
             @RequestParam(defaultValue = "id,asc") String[] sort) {
 
         String sortBy = sort[0];

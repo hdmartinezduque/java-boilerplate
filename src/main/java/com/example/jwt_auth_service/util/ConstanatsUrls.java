@@ -10,6 +10,11 @@ public class ConstanatsUrls {
             "/api/products",
             "/swagger-ui.html",
             "/swagger-ui/", 
-            "/v3/api-docs/"
+            "/v3/api-docs/**",
+            "/swagger-ui/**",
+            "/v3/api-docs",
+            "/docs",
+            "/redoc"
+
     );
 }
