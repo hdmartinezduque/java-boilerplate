@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>API Documentation</title>
+    <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        redoc {
+            display: block;
+            width: 100%;
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+<script>
+    Redoc.init('/v3/api-docs', {
+        theme: {
+            colors: {
+                primary: {
+                    main: '#1976d2'
+                },
+                text: {
+                    primary: '#000000',
+                    secondary: '#333333'
+                },
+                background: {
+                    main: '#ffffff',
+                    alternative: '#252526'
+                }
+            },
+            typography: {
+                fontSize: '14px',
+                headings: {
+                    fontWeight: '600'
+                }
+            },
+            sidebar: {
+                backgroundColor: '#252526'
+            },
+            logo: {
+                gutter: '2px'
+            }
+        },
+        hideDownloadButton: false,
+        hideHostname: false,
+        expandResponses: '200,201',
+        expandSingleSchemaField: true
+    }, document.body);
+</script>
+</body>
+</html>

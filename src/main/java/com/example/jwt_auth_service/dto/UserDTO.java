@@ -1,13 +1,23 @@
 package com.example.jwt_auth_service.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "User default constructor")
 public class UserDTO {
 
+    @Schema(description = "User ID", example = "1")
     private Long id;
+    @Schema(description = "User Name", example = "John Doe")
     private String name;
+    @Schema(description = "User Email", example = "user@example.com")
     private String email;
+    @Schema(description = "User Password", example = "securePassword123")
     private String password;      // Para requests
+    @Schema(description = "Company ID associated with the user", example = "2")
     private Long idCompany;       // Para requests
     private String companyName;   // Para responses
+
+
 
     public UserDTO() {
     }
@@ -27,6 +37,7 @@ public class UserDTO {
     }
 
     // Getters y Setters
+
     public Long getId() {
         return id;
     }
