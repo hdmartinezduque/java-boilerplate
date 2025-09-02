@@ -85,4 +85,8 @@ public class UserDTO {
     public void setCompanyName(String companyName) {
         this.companyName = companyName;
     }
+
+    public void setCompanyId(Long id) {
+        this.idCompany = id;
+    }
 }

@@ -1,8 +1,6 @@
 package com.example.jwt_auth_service.controller;
 
-import com.example.jwt_auth_service.dto.ApiResponse;
-import com.example.jwt_auth_service.dto.PageResponse;
-import com.example.jwt_auth_service.dto.UserCreateRequest;
+import com.example.jwt_auth_service.dto.*;
 import com.example.jwt_auth_service.model.User;
 import com.example.jwt_auth_service.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -11,6 +9,7 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -42,6 +41,7 @@ public class UserController {
         return ResponseEntity.ok(usersPage);
     }
 
+
     @PostMapping
     public ResponseEntity<User> create(@Valid @RequestBody UserCreateRequest req) {
         User user = new User();
@@ -67,5 +67,16 @@ public class UserController {
         }
         userService.deleteUser(id);
         return ResponseEntity.ok(new ApiResponse(HttpStatus.OK.value(), "User with ID " + id + " deleted successfully."));
+    }
+
+    @Operation (summary = "Get user by email")
+    @PostMapping( "/ByEmail" )
+    public ResponseEntity<?> getByEmail(@Valid @RequestBody UserEmailRequest obj) {
+        try {
+            UserDTO user = userService.getByEmail(obj.getEmail());
+            return ResponseEntity.ok(user);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(NOT_FOUND).body(new ApiResponse(NOT_FOUND.value(), e.getMessage()));
+        }
     }
 }

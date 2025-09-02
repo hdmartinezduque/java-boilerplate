@@ -1,6 +1,6 @@
 package com.example.jwt_auth_service.service;
 
-
+import com.example.jwt_auth_service.dto.UserDTO;
 import com.example.jwt_auth_service.dto.PageResponse;
 import com.example.jwt_auth_service.dto.UserCreateRequest;
 import com.example.jwt_auth_service.model.Company;
@@ -59,6 +59,27 @@ public class UserService {
     private EntityManager entityManager;
 
     @Transactional
+    public UserDTO getByEmail(String email) {
+        User user = userRepository.findByEmail(email.trim())
+                .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("User not found with email: " + email));
+
+        return toUserResponse(user);
+    }
+
+    private UserDTO toUserResponse(User user) {
+        UserDTO userResponse = new UserDTO();
+        userResponse.setId(user.getId());
+        userResponse.setName(user.getName());
+        userResponse.setEmail(user.getEmail());
+        if (user.getCompany() != null) {
+            userResponse.setCompanyId(user.getCompany().getId());
+            userResponse.setCompanyName(user.getCompany().getName());
+        }
+        return userResponse;
+    }
+
+
+    @Transactional
     public User createUser(User user, Long companyId) {
         if(userRepository.findByEmail(user.getEmail()).isPresent()) {
             throw new IllegalArgumentException("Email is already in use: " + user.getEmail());
@@ -72,6 +93,7 @@ public class UserService {
 
         return userRepository.save(user);
     }
+
 
     @Transactional
     public User updateUserPartial(Long id, Map<String, Object> updates) {
