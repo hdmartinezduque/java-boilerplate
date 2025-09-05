@@ -26,11 +26,13 @@ public class UserController {
             @Parameter(description = "sort field and direction", example = "id,asc")
             @RequestParam(defaultValue = "id,asc") String[] sort,
             @RequestParam(required = false) String status,
-            @RequestParam(required = false) String contract
+            @RequestParam(required = false) String contract,
+            @RequestParam(required = false) String codeId,
+            @RequestParam(required = false) String name
     ) {
         String sortBy = sort[0];
         String sortDir = sort.length > 1 ? sort[1] : "asc";
-        var usersPage = userService.getAllUsers(page, size, sortBy, sortDir, status, contract);
+        var usersPage = userService.getAllUsers(page, size, sortBy, sortDir, status, contract, codeId, name);
         return ResponseEntity.ok(usersPage);
     }
 

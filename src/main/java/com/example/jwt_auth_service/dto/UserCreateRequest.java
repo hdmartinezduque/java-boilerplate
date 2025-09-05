@@ -7,6 +7,7 @@ public class UserCreateRequest {
     @Email @NotBlank private String email;
     @NotBlank private String password;
     @NotNull  private Long companyId;
+    @NotBlank private String codeId;
     @NotBlank private String status;   // "active" / "inactive"
     @NotBlank private String contract; // "contractor" / "worker"
 
@@ -17,6 +18,8 @@ public class UserCreateRequest {
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
     public Long getCompanyId() { return companyId; }
+    public void setCodeId(String codeId) { this.codeId = codeId; }
+    public String getCodeId() { return codeId; }
     public void setCompanyId(Long companyId) { this.companyId = companyId; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }

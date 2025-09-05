@@ -41,15 +41,24 @@ public class UserService {
         this.userMapper = userMapper;
     }
 
-    public PageResponse<UserDTO> getAllUsers(int page, int size, String sortBy, String sortDir,
-                                             String statusCode, String contractCode) {
+    public PageResponse<UserDTO> getAllUsers(
+            int page,
+            int size,
+            String sortBy,
+            String sortDir,
+            String statusCode,
+            String contractCode,
+            String codeId,
+            String name
+    ) {
         Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
 
-        // Compatible con Spring Data JPA 3.3+: allOf ignora nulls
         Specification<User> spec = Specification.allOf(
                 UserSpecifications.withStatusCode(statusCode),
-                UserSpecifications.withContractCode(contractCode)
+                UserSpecifications.withContractCode(contractCode),
+                UserSpecifications.withCodeId(codeId),
+                UserSpecifications.withNameLike(name)
         );
 
         Page<User> pageResult = userRepository.findAll(spec, pageable);
@@ -92,6 +101,7 @@ public class UserService {
         user.setEmail(req.getEmail());
         user.setPassword(passwordEncoder.encode(req.getPassword()));
         user.setCompany(company);
+        user.setCodeId(req.getCodeId());
         user.setStatus(status);
         user.setContractType(contractType);
 

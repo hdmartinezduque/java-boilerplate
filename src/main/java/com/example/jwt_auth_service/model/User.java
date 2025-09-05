@@ -22,6 +22,9 @@ public class User implements UserDetails {
     @JsonIgnoreProperties({"users", "hibernateLazyInitializer", "handler"})
     private Company company;
 
+    @Column(name= "code_id", nullable = true, unique = true)
+    private String codeId;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "status_id", nullable = false,
             foreignKey = @ForeignKey(name = "fk_users_status"))
@@ -51,6 +54,8 @@ public class User implements UserDetails {
     }
 
     public Long getId() { return id; }
+    public String getCodeId() { return codeId; }
+    public void setCodeId(String codeId) { this.codeId = codeId; }
     public Company getCompany() { return company; }
     public void setCompany(Company company) { this.company = company; }
     public UserStatus getStatus() { return status; }

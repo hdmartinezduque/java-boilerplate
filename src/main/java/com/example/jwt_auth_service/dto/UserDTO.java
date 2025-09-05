@@ -9,6 +9,7 @@ public class UserDTO {
     private String email;
     private Long idCompany;
     private String companyName;
+    private String codeId;
     private String status;     // code: "active"
     private String contract;   // code: "contractor"
     private String createdAt;
@@ -20,6 +21,8 @@ public class UserDTO {
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
     public Long getIdCompany() { return idCompany; }
+    public String getCodeId() { return codeId; }
+    public void setCodeId(String codeId) { this.codeId = codeId; }
     public void setIdCompany(Long idCompany) { this.idCompany = idCompany; }
     public String getCompanyName() { return companyName; }
     public void setCompanyName(String companyName) { this.companyName = companyName; }

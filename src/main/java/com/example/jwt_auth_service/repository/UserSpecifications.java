@@ -21,4 +21,18 @@ public class UserSpecifications {
             return cb.equal(cb.lower(join.get("code")), contractCode.toLowerCase());
         };
     }
+
+    public static Specification<User> withCodeId(String codeId) {
+        return (root, query, cb) -> {
+            if (codeId == null || codeId.isBlank()) return null;
+            return cb.equal(cb.lower(root.get("codeId")), codeId.toLowerCase());
+        };
+    }
+
+    public static Specification<User> withNameLike(String name) {
+        return (root, query, cb) -> {
+            if (name == null || name.isBlank()) return null;
+            return cb.like(cb.lower(root.get("name")), "%" + name.toLowerCase() + "%");
+        };
+    }
 }
