@@ -1,61 +1,48 @@
 package com.example.jwt_auth_service.controller;
 
 import com.example.jwt_auth_service.dto.*;
-import com.example.jwt_auth_service.model.User;
 import com.example.jwt_auth_service.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
-import java.util.Set;
-
-import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
 
-    @Autowired
-    private UserService userService;
-    @Operation(summary = "Get all users with pagination and sorting")
+    private final UserService userService;
+    public UserController(UserService userService) { this.userService = userService; }
+
+    @Operation(summary = "Get all users with pagination, sorting and filters")
     @GetMapping
-    public ResponseEntity<PageResponse<User>> getAllUsers(
+    public ResponseEntity<PageResponse<UserDTO>> getAllUsers(
             @Parameter(description = "Page of Number", example = "0")
             @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Size", example = "10")
             @RequestParam(defaultValue = "10") int size,
-            @Parameter(description = "Order by, e.g., 'id,asc' or 'name,desc'", example = "id,asc")
-            @RequestParam(defaultValue = "id,asc") String[] sort) {
-
+            @Parameter(description = "sort field and direction", example = "id,asc")
+            @RequestParam(defaultValue = "id,asc") String[] sort,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String contract
+    ) {
         String sortBy = sort[0];
         String sortDir = sort.length > 1 ? sort[1] : "asc";
-
-        PageResponse<User> usersPage = userService.getAllUsers(page, size, sortBy, sortDir);
+        var usersPage = userService.getAllUsers(page, size, sortBy, sortDir, status, contract);
         return ResponseEntity.ok(usersPage);
     }
 
-
     @PostMapping
-    public ResponseEntity<User> create(@Valid @RequestBody UserCreateRequest req) {
-        User user = new User();
-        user.setName(req.getName());
-        user.setEmail(req.getEmail());
-        user.setPassword(req.getPassword());
-        User saved = userService.createUser(user, req.getCompanyId());
+    public ResponseEntity<UserDTO> create(@Valid @RequestBody UserCreateRequest req) {
+        UserDTO saved = userService.createUser(req);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<User> updateUserPartial(@PathVariable Long id, @RequestBody Map<String, Object> updates) {
-        //updates.keySet().retainAll(Set.of("name", "email", "password", "companyId"));
-        User updated = userService.updateUserPartial(id, updates);
+    public ResponseEntity<UserDTO> updateUserPartial(@PathVariable Long id, @RequestBody java.util.Map<String, Object> updates) {
+        UserDTO updated = userService.updateUserPartial(id, updates);
         return ResponseEntity.ok(updated);
     }
 
@@ -70,13 +57,13 @@ public class UserController {
     }
 
     @Operation (summary = "Get user by email")
-    @PostMapping( "/ByEmail" )
+    @PostMapping("/ByEmail")
     public ResponseEntity<?> getByEmail(@Valid @RequestBody UserEmailRequest obj) {
         try {
             UserDTO user = userService.getByEmail(obj.getEmail());
             return ResponseEntity.ok(user);
         } catch (EntityNotFoundException e) {
-            return ResponseEntity.status(NOT_FOUND).body(new ApiResponse(NOT_FOUND.value(), e.getMessage()));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse(HttpStatus.NOT_FOUND.value(), e.getMessage()));
         }
     }
 }

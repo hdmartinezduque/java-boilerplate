@@ -1,131 +1,141 @@
 package com.example.jwt_auth_service.service;
 
-import com.example.jwt_auth_service.dto.UserDTO;
-import com.example.jwt_auth_service.dto.PageResponse;
-import com.example.jwt_auth_service.dto.UserCreateRequest;
+import com.example.jwt_auth_service.dto.*;
+import com.example.jwt_auth_service.mapper.UserMapper;
 import com.example.jwt_auth_service.model.Company;
+import com.example.jwt_auth_service.model.ContractType;
 import com.example.jwt_auth_service.model.User;
-import com.example.jwt_auth_service.repository.UserRepository;
-import jakarta.transaction.Transactional;
-//import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
+import com.example.jwt_auth_service.model.UserStatus;
+import com.example.jwt_auth_service.repository.*;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import com.example.jwt_auth_service.repository.CompanyRepository;
+import jakarta.transaction.Transactional;
+import org.springframework.data.domain.*;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class UserService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final CompanyRepository companyRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final UserStatusRepository userStatusRepository;
+    private final ContractTypeRepository contractTypeRepository;
+    private final UserMapper userMapper;
 
-    @Autowired
-    private CompanyRepository companyRepository;
+    public UserService(UserRepository userRepository,
+                       CompanyRepository companyRepository,
+                       PasswordEncoder passwordEncoder,
+                       UserStatusRepository userStatusRepository,
+                       ContractTypeRepository contractTypeRepository,
+                       UserMapper userMapper) {
+        this.userRepository = userRepository;
+        this.companyRepository = companyRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.userStatusRepository = userStatusRepository;
+        this.contractTypeRepository = contractTypeRepository;
+        this.userMapper = userMapper;
+    }
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    public PageResponse<User> getAllUsers(int page, int size, String sortBy, String sortDir) {
-        Sort sort = sortDir.equalsIgnoreCase("asc")
-                ? Sort.by(sortBy).ascending()
-                : Sort.by(sortBy).descending();
-
+    public PageResponse<UserDTO> getAllUsers(int page, int size, String sortBy, String sortDir,
+                                             String statusCode, String contractCode) {
+        Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
-        Page<User> pageResult = userRepository.findAll(pageable);
 
-        List<User> users = pageResult.getContent();
+        // Compatible con Spring Data JPA 3.3+: allOf ignora nulls
+        Specification<User> spec = Specification.allOf(
+                UserSpecifications.withStatusCode(statusCode),
+                UserSpecifications.withContractCode(contractCode)
+        );
+
+        Page<User> pageResult = userRepository.findAll(spec, pageable);
+        List<UserDTO> content = pageResult.getContent().stream().map(userMapper::toDto).toList();
 
         return new PageResponse<>(
-                users,
+                content,
                 pageResult.getNumber(),
                 pageResult.getSize(),
                 pageResult.getTotalElements(),
                 pageResult.getTotalPages(),
                 pageResult.isLast()
         );
-      }
-
-    @PersistenceContext
-    private EntityManager entityManager;
+    }
 
     @Transactional
     public UserDTO getByEmail(String email) {
         User user = userRepository.findByEmail(email.trim())
                 .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("User not found with email: " + email));
-
-        return toUserResponse(user);
+        return userMapper.toDto(user);
     }
-
-    private UserDTO toUserResponse(User user) {
-        UserDTO userResponse = new UserDTO();
-        userResponse.setId(user.getId());
-        userResponse.setName(user.getName());
-        userResponse.setEmail(user.getEmail());
-        if (user.getCompany() != null) {
-            userResponse.setCompanyId(user.getCompany().getId());
-            userResponse.setCompanyName(user.getCompany().getName());
-        }
-        return userResponse;
-    }
-
 
     @Transactional
-    public User createUser(User user, Long companyId) {
-        if(userRepository.findByEmail(user.getEmail()).isPresent()) {
-            throw new IllegalArgumentException("Email is already in use: " + user.getEmail());
+    public UserDTO createUser(UserCreateRequest req) {
+        if (userRepository.findByEmail(req.getEmail()).isPresent()) {
+            throw new IllegalArgumentException("Email is already in use: " + req.getEmail());
         }
-        String hashedPassword = passwordEncoder.encode(user.getPassword());
-        user.setPassword(hashedPassword);
 
-        Company company = companyRepository.findById(companyId)
-                .orElseThrow(() -> new IllegalArgumentException("Company not found with ID: " + companyId));
+        Company company = companyRepository.findById(req.getCompanyId())
+                .orElseThrow(() -> new IllegalArgumentException("Company not found with ID: " + req.getCompanyId()));
+
+        UserStatus status = userStatusRepository.findByCodeAndEnabledTrue(req.getStatus())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid status code: " + req.getStatus()));
+
+        ContractType contractType = contractTypeRepository.findByCodeAndEnabledTrue(req.getContract())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid contract code: " + req.getContract()));
+
+        User user = new User();
+        user.setName(req.getName());
+        user.setEmail(req.getEmail());
+        user.setPassword(passwordEncoder.encode(req.getPassword()));
         user.setCompany(company);
+        user.setStatus(status);
+        user.setContractType(contractType);
 
-        return userRepository.save(user);
+        return userMapper.toDto(userRepository.save(user));
     }
 
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Transactional
-    public User updateUserPartial(Long id, Map<String, Object> updates) {
-        User userToUpdate = userRepository.findById(id)
+    public UserDTO updateUserPartial(Long id, Map<String, Object> updates) {
+        User u = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User by Id could not find it: " + id));
 
         updates.forEach((key, value) -> {
             switch (key) {
-                case "name":
-                    userToUpdate.setName((String) value);
-                    break;
-                case "email":
-                    userToUpdate.setEmail((String) value);
-                    break;
-                case "password":
-                    String hashedPassword = passwordEncoder.encode((String) value);
-                    userToUpdate.setPassword(hashedPassword);
-                    break;
-                case "companyId":
+                case "name" -> u.setName((String) value);
+                case "email" -> u.setEmail((String) value);
+                case "password" -> u.setPassword(passwordEncoder.encode((String) value));
+                case "companyId" -> {
                     Long cid = Long.valueOf(value.toString());
                     Company ref = entityManager.getReference(Company.class, cid);
-                    userToUpdate.setCompany(ref);
-                    break;
-                default:
-                    // Ignorar campos no permitidos
-                    break;
+                    u.setCompany(ref);
+                }
+                case "status" -> {
+                    String code = (String) value;
+                    UserStatus st = userStatusRepository.findByCodeAndEnabledTrue(code)
+                            .orElseThrow(() -> new IllegalArgumentException("Invalid status code: " + code));
+                    u.setStatus(st);
+                }
+                case "contract" -> {
+                    String code = (String) value;
+                    ContractType ct = contractTypeRepository.findByCodeAndEnabledTrue(code)
+                            .orElseThrow(() -> new IllegalArgumentException("Invalid contract code: " + code));
+                    u.setContractType(ct);
+                }
+                default -> { /* ignorar */ }
             }
         });
 
-        return userRepository.save(userToUpdate);
+        return userMapper.toDto(userRepository.save(u));
     }
 
+    @Transactional
     public void deleteUser(Long id) {
         userRepository.deleteById(id);
     }
