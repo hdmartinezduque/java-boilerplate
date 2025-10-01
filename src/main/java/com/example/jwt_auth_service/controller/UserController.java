@@ -19,20 +19,22 @@ public class UserController {
     @Operation(summary = "Get all users with pagination, sorting and filters")
     @GetMapping
     public ResponseEntity<PageResponse<UserDTO>> getAllUsers(
-            @Parameter(description = "Page of Number", example = "0")
-            @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "Size", example = "10")
-            @RequestParam(defaultValue = "10") int size,
-            @Parameter(description = "sort field and direction", example = "id,asc")
-            @RequestParam(defaultValue = "id,asc") String[] sort,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) String contract,
-            @RequestParam(required = false) String codeId,
-            @RequestParam(required = false) String name
+            @Parameter(description = "Page of Number", example = "1")
+            @RequestParam(defaultValue = "1") int page
+            , @Parameter(description = "Size", example = "10")
+            @RequestParam(defaultValue = "10") int size
+            , @Parameter(description = "sort field and direction", example = "id,asc")
+            @RequestParam(defaultValue = "id,asc") String[] sort
+            , @RequestParam(required = false) String status
+            , @RequestParam(required = false) String contract
+            , @RequestParam(required = false) String codeId
+            , @RequestParam(required = false) String name
+            , @RequestParam(required = false) String email
+            , @RequestParam(required = false) String companyName
     ) {
         String sortBy = sort[0];
         String sortDir = sort.length > 1 ? sort[1] : "asc";
-        var usersPage = userService.getAllUsers(page, size, sortBy, sortDir, status, contract, codeId, name);
+        var usersPage = userService.getAllUsers(page, size, sortBy, sortDir, status, contract, codeId, name, email, companyName);
         return ResponseEntity.ok(usersPage);
     }
 

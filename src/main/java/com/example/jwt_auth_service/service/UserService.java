@@ -49,24 +49,31 @@ public class UserService {
             String statusCode,
             String contractCode,
             String codeId,
-            String name
+            String name,
+            String email,
+            String companyName
     ) {
         Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
-        Pageable pageable = PageRequest.of(page, size, sort);
+
+        int normalizedPage = (page <= 0) ? 0 : page - 1;
+        Pageable pageable = PageRequest.of(normalizedPage, size, sort);
 
         Specification<User> spec = Specification.allOf(
                 UserSpecifications.withStatusCode(statusCode),
                 UserSpecifications.withContractCode(contractCode),
                 UserSpecifications.withCodeId(codeId),
-                UserSpecifications.withNameLike(name)
+                UserSpecifications.withNameLike(name),
+                UserSpecifications.withEmailLike(email),
+                UserSpecifications.withCompanyNameLike(companyName)
         );
 
         Page<User> pageResult = userRepository.findAll(spec, pageable);
+        int clientPage = pageResult.getNumber() + 1;
         List<UserDTO> content = pageResult.getContent().stream().map(userMapper::toDto).toList();
 
         return new PageResponse<>(
                 content,
-                pageResult.getNumber(),
+                clientPage,
                 pageResult.getSize(),
                 pageResult.getTotalElements(),
                 pageResult.getTotalPages(),
