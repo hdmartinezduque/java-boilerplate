@@ -51,7 +51,9 @@ public class UserService {
             String codeId,
             String name,
             String email,
-            String companyName
+            String companyName,
+            String address,
+            String telephone
     ) {
         Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
 
@@ -64,7 +66,9 @@ public class UserService {
                 UserSpecifications.withCodeId(codeId),
                 UserSpecifications.withNameLike(name),
                 UserSpecifications.withEmailLike(email),
-                UserSpecifications.withCompanyNameLike(companyName)
+                UserSpecifications.withCompanyNameLike(companyName),
+                UserSpecifications.withAddressLike(address),
+                UserSpecifications.withTelephoneLike(telephone)
         );
 
         Page<User> pageResult = userRepository.findAll(spec, pageable);

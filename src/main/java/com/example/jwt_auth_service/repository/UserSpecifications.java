@@ -52,4 +52,18 @@ public class UserSpecifications {
             return cb.like(cb.lower(join.get("companyName")), "%" + companyName.toLowerCase() + "%");
         };
     }
+
+    public static Specification<User> withAddressLike(String address) {
+        return (root, query, cb) -> {
+            if (address == null || address.isBlank()) return null;
+            return cb.like(cb.lower(root.get("address")), "%" + address.toLowerCase() + "%");
+        };
+    }
+
+    public static Specification<User> withTelephoneLike(String telephone) {
+        return (root, query, cb) -> {
+            if (telephone == null || telephone.isBlank()) return null;
+            return cb.like(cb.lower(root.get("telephone")), "%" + telephone.toLowerCase() + "%");
+        };
+    }
 }

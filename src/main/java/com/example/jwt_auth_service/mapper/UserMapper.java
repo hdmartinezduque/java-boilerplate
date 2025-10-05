@@ -35,6 +35,8 @@ public class UserMapper {
         dto.setName(user.getName());
         dto.setEmail(user.getEmail());
         dto.setCodeId(user.getCodeId());
+        dto.setAddress(user.getAddress());
+        dto.setTelephone(user.getTelephone());
 
         if (user.getCompany() != null) {
             dto.setIdCompany(user.getCompany().getId());

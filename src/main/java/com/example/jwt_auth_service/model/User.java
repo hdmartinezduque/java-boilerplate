@@ -25,6 +25,9 @@ public class User implements UserDetails {
     @Column(name= "code_id", nullable = true, unique = true)
     private String codeId;
 
+    @Column (name="address", nullable = false)
+    private String address;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "status_id", nullable = false,
             foreignKey = @ForeignKey(name = "fk_users_status"))
@@ -43,6 +46,9 @@ public class User implements UserDetails {
 
     @Column(nullable = false)
     private String password;
+
+    @Column(name= "telephone", nullable = false)
+    private String telephone;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
@@ -69,7 +75,10 @@ public class User implements UserDetails {
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
     public LocalDateTime getCreatedAt() { return createdAt; }
-
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
+    public String getTelephone() { return telephone; }
+    public void setTelephone(String telephone) { this.telephone = telephone; }
     public Long getIdCompany() { return company != null ? company.getId() : null; }
 
     // UserDetails

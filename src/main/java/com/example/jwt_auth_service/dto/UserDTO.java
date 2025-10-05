@@ -8,10 +8,12 @@ public class UserDTO {
     private String name;
     private String email;
     private Long idCompany;
+    private String address;
     private String companyName;
     private String codeId;
     private String status;     // code: "active"
     private String contract;   // code: "contractor"
+    private String telephone;
     private String createdAt;
 
     public Long getId() { return id; }
@@ -32,5 +34,9 @@ public class UserDTO {
     public void setContract(String contract) { this.contract = contract; }
     public String getCreatedAt() { return createdAt; }
     public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
+    public String getTelephone() { return telephone; }
+    public void setTelephone(String telephone) { this.telephone = telephone; }
 }
 

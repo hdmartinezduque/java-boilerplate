@@ -31,10 +31,12 @@ public class UserController {
             , @RequestParam(required = false) String name
             , @RequestParam(required = false) String email
             , @RequestParam(required = false) String companyName
+            , @RequestParam(required = false) String address
+            , @RequestParam(required = false) String telephone
     ) {
         String sortBy = sort[0];
         String sortDir = sort.length > 1 ? sort[1] : "asc";
-        var usersPage = userService.getAllUsers(page, size, sortBy, sortDir, status, contract, codeId, name, email, companyName);
+        var usersPage = userService.getAllUsers(page, size, sortBy, sortDir, status, contract, codeId, name, email, companyName, address, telephone);
         return ResponseEntity.ok(usersPage);
     }
 
