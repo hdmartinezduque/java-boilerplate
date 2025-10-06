@@ -10,10 +10,12 @@ import com.example.jwt_auth_service.repository.*;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import com.example.jwt_auth_service.mapper.ScorePlanMapper;
 
 import java.util.*;
 
@@ -26,19 +28,24 @@ public class UserService {
     private final UserStatusRepository userStatusRepository;
     private final ContractTypeRepository contractTypeRepository;
     private final UserMapper userMapper;
+    private final ScorePlanMapper scorePlanMapper;
+    private final ScorePlanRepository scorePlanRepository;
 
     public UserService(UserRepository userRepository,
                        CompanyRepository companyRepository,
                        PasswordEncoder passwordEncoder,
                        UserStatusRepository userStatusRepository,
                        ContractTypeRepository contractTypeRepository,
-                       UserMapper userMapper) {
+                       UserMapper userMapper, ScorePlanMapper scorePlanMapper,
+                       ScorePlanRepository scorePlanRepository) {
         this.userRepository = userRepository;
         this.companyRepository = companyRepository;
         this.passwordEncoder = passwordEncoder;
         this.userStatusRepository = userStatusRepository;
         this.contractTypeRepository = contractTypeRepository;
         this.userMapper = userMapper;
+        this.scorePlanMapper = scorePlanMapper;
+        this.scorePlanRepository = scorePlanRepository;
     }
 
     public PageResponse<UserDTO> getAllUsers(
@@ -56,7 +63,6 @@ public class UserService {
             String telephone
     ) {
         Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
-
         int normalizedPage = (page <= 0) ? 0 : page - 1;
         Pageable pageable = PageRequest.of(normalizedPage, size, sort);
 
@@ -73,7 +79,16 @@ public class UserService {
 
         Page<User> pageResult = userRepository.findAll(spec, pageable);
         int clientPage = pageResult.getNumber() + 1;
-        List<UserDTO> content = pageResult.getContent().stream().map(userMapper::toDto).toList();
+
+        List<UserDTO> content = pageResult.getContent().stream().map(user -> {
+            UserDTO dto = userMapper.toDto(user);
+            List<ScorePlanDTO> scores = scorePlanRepository.findAllByUser_CodeId(user.getCodeId())
+                    .stream()
+                    .map(scorePlanMapper::toDto)
+                    .toList();
+            dto.setScore(scores);
+            return dto;
+        }).toList();
 
         return new PageResponse<>(
                 content,
@@ -164,4 +179,19 @@ public class UserService {
     public boolean existsById(Long id) {
         return userRepository.existsById(id);
     }
+
+    public Page<UserDTO> getUsers(String codeId, Pageable pageable) {
+        Page<User> users = userRepository.findByAddressContaining(codeId, pageable);
+        System.out.println(users.getContent());
+        return users.map(user -> {
+            UserDTO dto = userMapper.toDto(user);
+            List<ScorePlanDTO> scores = scorePlanRepository.findAllByUser_CodeId(user.getCodeId())
+                    .stream()
+                    .map(scorePlanMapper::toDto)
+                    .toList();
+            dto.setScore(scores);
+            return dto;
+        });
+    }
+
 }

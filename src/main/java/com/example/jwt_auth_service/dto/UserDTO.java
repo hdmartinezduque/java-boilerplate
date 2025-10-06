@@ -1,6 +1,7 @@
 package com.example.jwt_auth_service.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.List;
 
 @Schema(description = "User response")
 public class UserDTO {
@@ -14,6 +15,7 @@ public class UserDTO {
     private String status;     // code: "active"
     private String contract;   // code: "contractor"
     private String telephone;
+    private List<ScorePlanDTO> score;
     private String createdAt;
 
     public Long getId() { return id; }
@@ -38,5 +40,7 @@ public class UserDTO {
     public void setAddress(String address) { this.address = address; }
     public String getTelephone() { return telephone; }
     public void setTelephone(String telephone) { this.telephone = telephone; }
+    public List<ScorePlanDTO> getScore() { return score; }
+    public void setScore(List<ScorePlanDTO> score) { this.score = score; }
 }
 
